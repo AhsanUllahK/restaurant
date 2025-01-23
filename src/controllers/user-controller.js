@@ -88,4 +88,36 @@ export const updatePassword = async (req, res) => {
   }
 };
 
-export const deleteAccount = async (req, res) => {};
+export const deleteAccount = async (req, res) => {
+  const { password, email } = req.body;
+  // const userId = req.user.id;
+  try {
+    // const doesUserExist = await User.findOne({ _id: req.user.id });
+    const doesUserExist = await User.findOne({ email });
+    if (!doesUserExist) {
+      return res.status(401).json({
+        message: "Un-Authorized. You are not allowed to delete this Account.",
+      });
+    }
+
+    const isPasswordCorrect = bcrypt.compare(password, doesUserExist.password);
+    if (isPasswordCorrect.password === password) {
+      return res.status(401).json({
+        message: "Not-Valid. Incorrect Password.",
+      });
+    }
+    await User.findOneAndDelete(req.user.id);
+
+    return res
+      .status(200)
+      .json({ message: "Your account is deleted Successfully." });
+  } catch (error) {
+    console.error("Error in deleteAccount Controller:", {
+      message: error.message,
+      stack: error.stack,
+    });
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error in deleteAccount Controller." });
+  }
+};
